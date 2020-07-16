@@ -32,6 +32,14 @@
 			height:80%;
 			overflow:auto;
 		}
+		#content .my{
+			color: #06a8f6;
+			font-weight: bold;
+		}
+		#content .dfColor{
+			color: blue;
+			font-weight: bold;
+		}
 		#sand{
 			height:20%;
 			background-color: #fff
@@ -83,6 +91,7 @@
 	(function(){
 		//用户的用户名
 		let name =  '';
+		
 		name = prompt("请输入您的昵称！");
 		if(!name){
 			alert('您没有输入名字，我们会给您创建你个昵称！');
@@ -126,10 +135,12 @@
 				case 4 :
 					//得到从服务过来的消息，渲染到页面
 					let user = '所有人';
+					
 					if(msg.target != 'all'){
 							user = '我';
+							
 					}
-					$('#content ul').append('<li>'+msg.name+' 对 '+user+'说：'+msg.text+'</li>');
+					$('#content ul').append('<li><span class="dfColor">'+msg.name+'</span>  对 <span class="my">'+user+'</span> 说：'+msg.text+'</li>');
 					break;
 				case 5 :	
 					//渲染用户退出消息
@@ -152,8 +163,7 @@
 			let msg    = ''; 
 			let target = $('#select').val();
 			let text   = $('#text').val();
-			let user   = $('#select option:selected').text();;
-			
+			let user   = $('#select option:selected').text();
 			//数据过滤
 			text = text.replace(/<.*?>|<\?.*?php|^\s*/imsg, "");
 			if(!text){
@@ -162,7 +172,7 @@
 			}
 			$('#text').val('');
 			//吧数据渲染到页面
-			$('#content ul').append('<li>我 对 '+ user +'说：'+text+'</li>');
+			$('#content ul').append('<li > <span class="my">我</span> 对 <span class="dfColor">'+ user +'</span>说：'+text+'</li>');
 
 			//把数据发送到服务器
 			msg = JSON.stringify({'type':0,'name':name,'text':text,'target':target});
