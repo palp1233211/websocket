@@ -3,7 +3,6 @@
 /**
  * redis单例
  */
-// include_once('./redis.php');
 class RedisSingle
 {
 	private static $obj = null;
