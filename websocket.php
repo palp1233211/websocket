@@ -15,7 +15,7 @@ class WebSocket{
 	public $redis = null;
 	public static $allMembers  = [];
 	public function __construct(){
-		$this->ws = new Swoole\WebSocket\Server('0.0.0.0',9501);
+		$this->ws = new Swoole\WebSocket\Server('0.0.0.0',9510);
 		$this->ws->set([
 			'worker_num'=>2,
 			'task_worker_num'=>2,
