@@ -86,7 +86,8 @@
 		if(!name){
 			alert('您没有输入名字，我们会给您创建你个昵称！');
 		}
-		let ws = new WebSocket('ws://212.64.71.48:9501');
+		let ws = new WebSocket('ws://212.64.71.48:9510');
+
 		ws.onopen = function(){
 			//发送用户名，用户名不存在则生成用户名
 			if(name){
@@ -142,6 +143,10 @@
 		}
 
 		$('button').click(function(){
+			if(ws.readyState !=1){
+				alert('未与服务器建立链接！')
+				return;
+			}
 			let msg    = ''; 
 			let target = $('#select').val();
 			let text   = $('#text').val();
