@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+	<button type="button">发送</button>
+	<div>
+		
+
+	</div>
+</body>
+<script>
+	let ws = new WebSocket('ws://http://212.64.71.48:9501');
+	ws.onopen = function(){
+		console.log('建立链接');
+	}
+	ws.onmessage = function(evt){
+		console.log(evt.data);
+	}
+	ws.onclose = function(){
+		console.log('建立关闭');
+	}
+	let i = 0;
+	$('button').click(function(){
+		ws.send('my name is client' + i++);
+	})
+</script>
+</html>
