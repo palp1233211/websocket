@@ -34,7 +34,7 @@ class foundName
 		$i = rand(0,count($this->familyNames)-1);
 		$j = rand(0,count($this->givenNames)-1);
 		$name = $this->familyNames[$i].$this->givenNames[$j];
-		//防止姓名重复
+		//防止姓名重复 
 		if (in_array($name,$data)) {
 			$this->getName($data);
 		}
