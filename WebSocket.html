@@ -186,9 +186,16 @@
 		},290000)
 		//回车发送数据
 		$(document).keypress(function(e) {
-		　　if (e.which == 13 && $('#text').val() != '')
+		　　if (e.which == 13 && $('#text').val() != ''){
+				//失焦事件
+				$('#text').blur()
 				//触发点击事件
 				$('button').trigger('click')
+				//清空数据
+				$('#text').val('')
+			}
+				
+
 		})
 	})();
 	
