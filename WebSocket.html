@@ -1,31 +1,169 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 	<meta charset="UTF-8">
 	<title>Document</title>
 	<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<style type="text/css" media="screen">
+		li{
+			list-style-type: none;
+		}
+		#centre{
+			width: 70%;
+			height: 600px;
+			margin: 0 auto;
+			background-color: #ddd;
+		}
+		#chat{
+			width: 70%;
+			height: 500px;
+			display: inline-block;
+			background-color: #f3f3f3;
+			vertical-align: top;
+			margin:30px 0 30px 20px;
+		}
+		#user{
+			display: inline-block;
+			width: 20%;
+			height: 540px;
+			background-color: #d3d3d3;
+			vertical-align: top;
+			margin:30px 0 30px 40px;
+		}
+		#content{
+			height:80%;
+		}
+		#sand{
+			height:20%;
+			background-color: #fff
+		}
+		.user_login{
+			text-align: center;
+			color: #9c8e8e;
+		}
+		textarea{
+			width: 90%;
+    		height: 88%;
+    		resize:none;
+    		vertical-align: bottom;
+    		display: inline-block;
+    		margin-top: 5px;
+    		margin-left: 10px;
+		}
+		.target{
+			width: 100%;
+			height: 30px;
+		}
+	</style>
 </head>
 <body>
-	<button type="button">发送</button>
-	<div>
-		
-
+	<div id="centre">
+		<div id="chat">
+			<div id="content">
+				<ul>
+					
+				</ul>
+			</div>
+			<div class="target">
+				<select name="select" id="select">
+					<option value="all">所有人</option>
+					
+				</select>
+				<span>用户名：</span><span id="userName"></span>
+			</div>
+			<div id="sand">
+				<textarea name="text" id="text"></textarea>
+				<button type="button">发送</button>
+			</div>
+		</div>
+		<div id="user"></div>
 	</div>
-</body>
+	
+
 <script>
-	let ws = new WebSocket('ws://http://212.64.71.48:9501');
-	ws.onopen = function(){
-		console.log('建立链接');
-	}
-	ws.onmessage = function(evt){
-		console.log(evt.data);
-	}
-	ws.onclose = function(){
-		console.log('建立关闭');
-	}
-	let i = 0;
-	$('button').click(function(){
-		ws.send('my name is client' + i++);
-	})
+	(function(){
+		//用户的用户名
+		let name =  '';
+		name = prompt("请输入您的昵称！");
+		if(!name){
+			alert('您没有输入名字，我们会给您创建你个昵称！');
+		}
+		let ws = new WebSocket('ws://212.64.71.48:9501');
+		ws.onopen = function(){
+			//发送用户名，用户名不存在则生成用户名
+			if(name){
+				msg = JSON.stringify({'type':10,'name':name});
+				$('#userName').text(name);
+			}else{
+				msg = JSON.stringify({'type':10,'name':''});
+			}
+			ws.send(msg);
+		}
+		ws.onmessage = function(evt){
+			let msg = JSON.parse(evt.data)
+			switch( +msg.type ){
+				case 0 :
+					//渲染当前用户的用户名。
+					name = msg.content;
+					$('#userName').text(name);
+					break;
+				case 1 :
+					//渲染新用户退出登录消息
+					 $('#content ul').append('<li class="user_login">'+msg.content+'</li>');
+					break;	
+				case 2 :
+					//向页面中的用户列表渲染数据
+					$('#user').html('')
+					$('#select').html('')
+					$('#select').append('<option value="all">所有人</option>');
+					for (var i in msg.content) {
+						$('#user').append('<li>'+i+'</li>');
+						if(i != name){
+							$('#select').append('<option value="'+msg.content[i]+'">'+i+'</option>');
+						}
+					}	
+					break;
+				case 4 :
+					//得到从服务过来的消息，渲染到页面
+					let user = '所有人';
+					if(msg.target != 'all'){
+							user = '我';
+					}
+					$('#content ul').append('<li>'+msg.name+' 对 '+user+'说：'+msg.text+'</li>');
+					break;
+				case 5 :	
+					//渲染用户退出消息
+					$('#content ul').append('<li class="user_login">'+msg.content+'</li>');
+					break;
+			}	
+
+			console.log(msg);
+		}
+		ws.onclose = function(){
+			console.log('建立关闭');
+		}
+
+		$('button').click(function(){
+			let msg    = ''; 
+			let target = $('#select').val();
+			let text   = $('#text').val();
+			let user   = $('#select option:selected').text();;
+			$('#text').val('');
+			//数据过滤
+			text = text.replace(/[<.*?>|<\?.*?php ]/ig, "");
+			if(!text){
+				return ;
+			}
+			//吧数据渲染到页面
+			$('#content ul').append('<li>我 对 '+ user +'说：'+text+'</li>');
+			//把数据发送到服务器
+			msg = JSON.stringify({'type':0,'name':name,'text':text,'target':target});
+			ws.send(msg);
+		})
+		setInterval(function(){
+			msg = JSON.stringify({'type':20});
+			ws.send(msg);
+		},290000)
+	})();
+	
 </script>
+</body>
 </html>
