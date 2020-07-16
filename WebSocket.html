@@ -30,6 +30,7 @@
 		}
 		#content{
 			height:80%;
+			overflow:auto;
 		}
 		#sand{
 			height:20%;
@@ -107,7 +108,7 @@
 					$('#userName').text(name);
 					break;
 				case 1 :
-					//渲染新用户退出登录消息
+					//渲染新用户登录登录消息
 					 $('#content ul').append('<li class="user_login">'+msg.content+'</li>');
 					break;	
 				case 2 :
@@ -135,11 +136,12 @@
 					$('#content ul').append('<li class="user_login">'+msg.content+'</li>');
 					break;
 			}	
+				//吧公屏的滚动条拉倒最低处
+				$("#content").scrollTop($("#content ul").outerHeight());
 
-			console.log(msg);
 		}
 		ws.onclose = function(){
-			console.log('建立关闭');
+			console.log('链接关闭');
 		}
 
 		$('button').click(function(){
@@ -151,17 +153,22 @@
 			let target = $('#select').val();
 			let text   = $('#text').val();
 			let user   = $('#select option:selected').text();;
-			$('#text').val('');
+			
 			//数据过滤
-			text = text.replace(/[<.*?>|<\?.*?php ]/ig, "");
+			text = text.replace(/<.*?>|<\?.*?php|^\s*/imsg, "");
 			if(!text){
+				alert('不能为空，特殊数据会被过滤！')
 				return ;
 			}
+			$('#text').val('');
 			//吧数据渲染到页面
 			$('#content ul').append('<li>我 对 '+ user +'说：'+text+'</li>');
+
 			//把数据发送到服务器
 			msg = JSON.stringify({'type':0,'name':name,'text':text,'target':target});
 			ws.send(msg);
+			//吧公屏的滚动条拉倒最低处
+			$("#content").scrollTop($("#content ul").outerHeight());
 		})
 		setInterval(function(){
 			msg = JSON.stringify({'type':20});
