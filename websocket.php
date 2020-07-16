@@ -12,8 +12,12 @@ class WebSocket{
 			'othersMsg'=>4,//服务器向其他用户发送的消息
 			'close'=>5,		//用户断开连接
 		];
+	//redes链接标识
 	public $redis = null;
-	public static $allMembers  = [];
+	/**
+	 * 建立WebSocket服务器
+	 * [__construct description]
+	 */
 	public function __construct(){
 		$this->ws = new Swoole\WebSocket\Server('0.0.0.0',9510);
 		$this->ws->set([
@@ -30,6 +34,11 @@ class WebSocket{
 		$this->ws->on('close',[$this,'OnClose']);
 		$this->ws->start();
 	}
+	/**
+	 * 当进程启动事触发，删除redis的脏数据。
+	 * @param Swoole\Server $server   [description]
+	 * @param int           $workerId [description]
+	 */
 	public function OnWorkerStart(Swoole\Server $server, int $workerId){
 		//当进程启动时，先检查当前有没有客户端连接，没有去删除一下redis中的客户信息，防止服务器意外终止，导致的redis有用户信息的脏数据。
 		$connections = json_decode(json_encode($this->ws->connections),true);
@@ -38,10 +47,19 @@ class WebSocket{
 			$this->redis->del('allMembers');
 		}
 	}
-
+	/**
+	 * 用户建立连接
+	 * @param Swoole\WebSocket\Server $server  [description]
+	 * @param [type]                  $request [description]
+	 */
 	public function OnOpen(Swoole\WebSocket\Server $server , $request){
 #		echo '用户的链接标识：'.$request->fd.PHP_EOL;
 	}
+	/**
+	 * 用户发送消息
+	 * @param Swoole\WebSocket\Server $server [description]
+	 * @param [type]                  $frame  [description]
+	 */
 	public function OnMessage(Swoole\WebSocket\Server $server , $frame){
 #		echo "receive from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}".PHP_EOL;
 
@@ -72,6 +90,13 @@ class WebSocket{
 			$server->task($data);
 		}
 	}
+	/**
+	 * 异步任务
+	 * @param Swoole\Server $server   [description]
+	 * @param [type]        $task     [description]
+	 * @param [type]        $workerId [description]
+	 * @param [type]        $data     [description]
+	 */
 	public function OnTask(Swoole\Server $server,  $task, $workerId, $data) {
 		switch($data['type']){
 			case 0 :
@@ -101,6 +126,11 @@ class WebSocket{
 				break;
 		}
 	}
+	/**
+	 * 客户端断开连接
+	 * @param [type] $ser [description]
+	 * @param [type] $fd  [description]
+	 */
 	public function OnClose($ser, $fd){
 #		echo '断开连接：'.$fd.PHP_EOL;
 		$name = $this->redis->ZRANGEBYSCORE('allMembers',$fd,$fd)[0];
@@ -110,12 +140,24 @@ class WebSocket{
 		$data = ['type' => 11, 'fd' => $fd ,'name'=>$name, 'content' => $name.'：离开聊天室！','target'=>'all'];
 		$ser->task($data);
 	}
+	/**
+	 * 数据过滤
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
 	public function filter($data){
 		$data = trim($data);
 		$data = strip_tags($data);
 		$data = htmlspecialchars($data);
 		return $data;
 	}
+	/**
+	 *  向客户端发送消息
+	 * @param  [type] $connections [description]
+	 * @param  [type] $message     [description]
+	 * @param  string $all         [description]
+	 * @return [type]              [description]
+	 */
 	public function msg($connections,$message,$all = ''){
 		if(is_array($connections) or is_object($connections)){
 			foreach($this->ws->connections as $fd){
