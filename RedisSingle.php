@@ -20,5 +20,5 @@ class RedisSingle
 	private function __clone(){
 		
 	}
-
+	
 }
