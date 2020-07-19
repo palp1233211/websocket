@@ -82,7 +82,8 @@ class WebSocket{
 	                        $data['name'] = $foundName->getName($this->redis->zrange('allMembers',0,-1));
                 	        $message = json_encode(['type'=>self::$code['name'],'content'=>$data['name']]);
 	                        //把用户名发送给客户端
-                        	$server->push($frame->fd , $message);
+	                        $this->msg($frame->fd , $message);
+                        	// $server->push($frame->fd , $message);
                 	}
 			//吧新连接的用户放入数组，统一管理，以文件链接符标识为键，用户名为值。  
 	                //进程隔离，导致各个进程间数据不一致，采用redis来储存用户。
