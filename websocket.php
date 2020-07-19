@@ -8,8 +8,8 @@ class WebSocket{
 			'name'=>0,		//发送用户名和接收用户名
 			'others'=>1,	//其他用户连接
 			'allMembers'=>2,//向所有用户发送当前所有用户连接
-			'myMsg'=>3,		//服务器向当前连接发送消息
-			'othersMsg'=>4,	//服务器向其他用户发送的消息
+			'myMsg'=>3,		//服务器向当前连接发送消息，未使用
+			'othersMsg'=>4,	//服务器向其他用户发送的消息，，未使用
 			'close'=>5,		//用户断开连接
 			'clientMsg'=>6,	//接收客户端发送的消息
 			'serverMsg'=>7,	//向客户端发送的消息
@@ -92,6 +92,8 @@ class WebSocket{
                                  return;
 			$this->redis->zadd('allMembers',$frame->fd,$data['name']);
 			$server->task($data);
+			//发送当前用户连接组
+			$server->task(['type'=>self::$code['allMembers']]);
 		}
 	}
 	/**
@@ -104,10 +106,10 @@ class WebSocket{
 	public function OnTask(Swoole\Server $server,  $task, $workerId, $data) {
 		switch($data['type']){
 			case self::$code['serverMsg'] :
+				//向客户端 发送文本信息
 				$isData = $data;
 		        // $isData['type'] = self::$code['othersMsg'];
            		$isData = json_encode($isData);
-				//发送文本信息
 				if($data['target'] == 'all'){
 					$this->msg($this->ws->connections,$isData,$data['fd']);
 				}else if($this->ws->exist(intval($data['target']))){
@@ -118,8 +120,11 @@ class WebSocket{
 			case self::$code['name'] :
 				//新用户连接，广播全体成员
 				$message = json_encode(['type'=>self::$code['others'],'content'=>"欢迎：".$data['name']." 加入聊天室。"]);
-                $allMembers = json_encode(['type'=>self::$code['allMembers'],'content'=>$this->redis->zrange('allMembers',0,-1,true)]);
 				$this->msg($this->ws->connections,$message); 
+				break;
+			case self::$code['allMembers'] :
+				//向所有用户推送当前连接的用户
+				$allMembers = json_encode(['type'=>self::$code['allMembers'],'content'=>$this->redis->zrange('allMembers',0,-1,true)]);
 				$this->msg($this->ws->connections,$allMembers);
 				break;
 			case self::$code['close'] :
@@ -143,6 +148,8 @@ class WebSocket{
 		
 		$data = ['type' => self::$code['close'], 'fd' => $fd ,'name'=>$name, 'content' => $name.'：离开聊天室！','target'=>'all'];
 		$ser->task($data);
+		//发送当前用户连接组
+		$ser->task(['type'=>self::$code['allMembers']]);
 	}
 	/**
 	 * 数据过滤
@@ -151,8 +158,9 @@ class WebSocket{
 	 */
 	public function filter($data){
 		$data = trim($data);
+		$data = htmlspecialchars_decode($data);
 		$data = strip_tags($data);
-		$data = htmlspecialchars($data);
+		// $data = htmlspecialchars($data);
 		return $data;
 	}
 	/**
