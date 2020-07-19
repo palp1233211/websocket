@@ -89,6 +89,15 @@
 
 <script>
 	(function(){
+		let code = {
+			'name':0,		//创建用户名
+			'others':1,	//其他用户连接
+			'allMembers':2,//向所有用户发送消息
+			'myMsg':3,		//服务器向当前连接发送消息
+			'othersMsg':4,//服务器向其他用户发送的消息
+			'close':5,		//用户断开连接
+			
+		};
 		//用户的用户名
 		let name =  '';
 		
@@ -135,12 +144,12 @@
 				case 4 :
 					//得到从服务过来的消息，渲染到页面
 					let user = '所有人';
-					
+					let dfColor = 'dfColor';
 					if(msg.target != 'all'){
 							user = '我';
-							
+							dfColor = 'my'
 					}
-					$('#content ul').append('<li><span class="dfColor">'+msg.name+'</span>  对 <span class="my">'+user+'</span> 说：'+msg.text+'</li>');
+					$('#content ul').append('<li><span class="dfColor">'+msg.name+'</span>  对 <span class="'+dfColor+'">'+user+'</span> 说：'+msg.text+'</li>');
 					break;
 				case 5 :	
 					//渲染用户退出消息
