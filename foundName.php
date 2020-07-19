@@ -6,7 +6,7 @@
 class foundName
 {
 	
-	public $familyNames = [
+	private $familyNames = [
 				"赵", "钱", "孙", "李", "周", "吴", "郑", "王", "冯", "陈", 
 				"褚", "卫", "蒋", "沈", "韩", "杨", "朱", "秦", "尤", "许",
 				"何", "吕", "施", "张", "孔", "曹", "严", "华", "金", "魏", 
@@ -18,7 +18,7 @@ class foundName
 				"乐", "于", "时", "傅", "皮", "卞", "齐", "康", "伍", "余", 
 				"元", "卜", "顾", "孟", "平", "黄", "和", "穆", "萧", "尹"
 			];
-	public $givenNames = [
+	private $givenNames = [
 				"子璇", "淼", "国栋", "夫子", "瑞堂", "甜", "敏", "尚", "国贤", "贺祥", "晨涛", 
 				"昊轩", "易轩", "益辰", "益帆", "益冉", "瑾春", "瑾昆", "春齐", "杨", "文昊", 
 				"东东", "雄霖", "浩晨", "熙涵", "溶溶", "冰枫", "欣欣", "宜豪", "欣慧", "建政", 
@@ -30,6 +30,17 @@ class foundName
 				"佳钰", "佳玉", "晓庆", "一鸣", "语晨", "添池", "添昊", "雨泽", "雅晗", "雅涵", 
 				"清妍", "诗悦", "嘉乐", "晨涵", "天赫", "玥傲", "佳昊", "天昊", "萌萌", "若萌"
 			];
+	private static $obj = null;
+	private function __construct(){
+	
+	}
+	public static function init(){
+		if (self::$obj == null) {
+			self::$obj = new foundName();
+		}
+		return self::$obj;
+	}
+
 	public function getName($data){
 		$i = rand(0,count($this->familyNames)-1);
 		$j = rand(0,count($this->givenNames)-1);
@@ -42,8 +53,6 @@ class foundName
 	}
 
 }
-
-
 
 
 
