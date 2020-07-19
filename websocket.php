@@ -5,13 +5,15 @@ class WebSocket{
 	public $ws = null;
 	//状态码
 	public static $code = [
-			'name'=>0,		//创建用户名
+			'name'=>0,		//发送用户名和接收用户名
 			'others'=>1,	//其他用户连接
-			'allMembers'=>2,//向所有用户发送消息
+			'allMembers'=>2,//向所有用户发送当前所有用户连接
 			'myMsg'=>3,		//服务器向当前连接发送消息
-			'othersMsg'=>4,//服务器向其他用户发送的消息
+			'othersMsg'=>4,	//服务器向其他用户发送的消息
 			'close'=>5,		//用户断开连接
-
+			'clientMsg'=>6,	//接收客户端发送的消息
+			'serverMsg'=>7,	//向客户端发送的消息
+			'heartbeat'=>20,//接收客户端心跳检测发送的消息
 		];
 	//redes链接标识
 	public $redis = null;
@@ -65,14 +67,15 @@ class WebSocket{
 #		echo "receive from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}".PHP_EOL;
 
 		$data = json_decode($frame->data,true);
-		if($data['type'] == 0){
-			//有用户发布消息，广播到其他用户
+		if($data['type'] == self::$code['clientMsg']){
+			//有用户发布消息，广播到其他客户端用户
+			$data['type'] = self::$code['serverMsg'];
 			$data['fd'] = $this->redis->zscore('allMembers',$data['name']);
 			$data['text'] = $this->filter($data['text']);		
 			if(empty($data['text']))
 				return;
 			$server->task($data);
-		}else if($data['type'] == 10){
+		}else if($data['type'] == self::$code['name']){
 			if(empty($data['name'])){
                 	        include_once(__DIR__.'/foundName.php');
         	                $foundName  = foundName::init();
@@ -100,10 +103,10 @@ class WebSocket{
 	 */
 	public function OnTask(Swoole\Server $server,  $task, $workerId, $data) {
 		switch($data['type']){
-			case 0 :
+			case self::$code['serverMsg'] :
 				$isData = $data;
-        		        $isData['type'] = self::$code['othersMsg'];
-	               		$isData = json_encode($isData);
+		        // $isData['type'] = self::$code['othersMsg'];
+           		$isData = json_encode($isData);
 				//发送文本信息
 				if($data['target'] == 'all'){
 					$this->msg($this->ws->connections,$isData,$data['fd']);
@@ -112,14 +115,14 @@ class WebSocket{
 					$this->msg($data['target'],$isData);	
 				}
 				break;
-			case 10 :
+			case self::$code['name'] :
 				//新用户连接，广播全体成员
 				$message = json_encode(['type'=>self::$code['others'],'content'=>"欢迎：".$data['name']." 加入聊天室。"]);
                 $allMembers = json_encode(['type'=>self::$code['allMembers'],'content'=>$this->redis->zrange('allMembers',0,-1,true)]);
 				$this->msg($this->ws->connections,$message); 
 				$this->msg($this->ws->connections,$allMembers);
 				break;
-			case 11 :
+			case self::$code['close'] :
 				//有用户断开连接,广播全体成员
 				$data['type'] = self::$code['close'];
 				$message = json_encode($data);
@@ -138,7 +141,7 @@ class WebSocket{
 		//用户断开连接，删除该用户的链接信息。
 		$this->redis->zremrangebyscore('allMembers',$fd,$fd);		
 		
-		$data = ['type' => 11, 'fd' => $fd ,'name'=>$name, 'content' => $name.'：离开聊天室！','target'=>'all'];
+		$data = ['type' => self::$code['close'], 'fd' => $fd ,'name'=>$name, 'content' => $name.'：离开聊天室！','target'=>'all'];
 		$ser->task($data);
 	}
 	/**
