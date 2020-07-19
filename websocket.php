@@ -1,6 +1,6 @@
 <?php
 
-include_once('./RedisSingle.php');
+include_once(__DIR__.'/RedisSingle.php');
 class WebSocket{
 	public $ws = null;
 	//状态码
@@ -11,6 +11,7 @@ class WebSocket{
 			'myMsg'=>3,		//服务器向当前连接发送消息
 			'othersMsg'=>4,//服务器向其他用户发送的消息
 			'close'=>5,		//用户断开连接
+
 		];
 	//redes链接标识
 	public $redis = null;
@@ -73,8 +74,8 @@ class WebSocket{
 			$server->task($data);
 		}else if($data['type'] == 10){
 			if(empty($data['name'])){
-                	        include_once('./foundName.php');
-        	                $foundName  = new foundName();
+                	        include_once(__DIR__.'/foundName.php');
+        	                $foundName  = foundName::init();
 	                        $data['name'] = $foundName->getName($this->redis->zrange('allMembers',0,-1));
                 	        $message = json_encode(['type'=>self::$code['name'],'content'=>$data['name']]);
 	                        //把用户名发送给客户端
@@ -114,8 +115,8 @@ class WebSocket{
 			case 10 :
 				//新用户连接，广播全体成员
 				$message = json_encode(['type'=>self::$code['others'],'content'=>"欢迎：".$data['name']." 加入聊天室。"]);
-                		$allMembers = json_encode(['type'=>self::$code['allMembers'],'content'=>$this->redis->zrange('allMembers',0,-1,true)]);
-				$this->msg($this->ws->connections,$message,$data['fd']); 
+                $allMembers = json_encode(['type'=>self::$code['allMembers'],'content'=>$this->redis->zrange('allMembers',0,-1,true)]);
+				$this->msg($this->ws->connections,$message); 
 				$this->msg($this->ws->connections,$allMembers);
 				break;
 			case 11 :
@@ -153,9 +154,9 @@ class WebSocket{
 	}
 	/**
 	 *  向客户端发送消息
-	 * @param  [type] $connections [description]
-	 * @param  [type] $message     [description]
-	 * @param  string $all         [description]
+	 * @param  [type] $connections [所有链接]
+	 * @param  [type] $message     [发送的消息]
+	 * @param  string $all         [不发送给哪个链接]
 	 * @return [type]              [description]
 	 */
 	public function msg($connections,$message,$all = ''){
